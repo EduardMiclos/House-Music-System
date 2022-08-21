@@ -2,6 +2,7 @@ import youtube_dl as ytdl
 from youtubesearchpython import PlaylistsSearch
 import os
 from typing import List
+import random
 
 class MusicManager:
     def __init__(self, ytdl_options: dict) -> None:
@@ -16,36 +17,34 @@ class MusicManager:
         pass
 
     # Adds a new song to the database.
+    #https://stackoverflow.com/questions/44183473/get-video-information-from-a-list-of-playlist-with-youtube-dl
+
     # THIS MIGHT RECEIVE A 'SONG' OBJECT AS PARAMETER!!!!
     def add_song(self, genre: str, search_limit: int = 5) -> None:
 
-        search_query = genre + ' playlist'
+        search_query = f'{genre} playlist' 
         playlists_search = PlaylistsSearch(search_query, limit = search_limit)
 
-        # All the resulted playlists
-        playlist = playlist_search.result()['result']
+        # Fetching all the resulted playlists
+        playlists = playlists_search.result()['result']
 
-        # Getting a random playlist from the lists of playlists
+        # Getting the link of aa random playlist from the lists of playlists
+        playlist = random.choice(playlists)['link']
 
-        # Getting a random link from the specific playlist
-        
-        # Downloading the song and saving it to the specified location     
+        with ytdl.YoutubeDL(self.ytdl_options) as ytdl_configured:
+            playlist_dict = ytdl_configured.extract_info(playlist, download = False)
+            playlist_dict = playlist_dict['entries']
 
-#videosSearch = PlaylistsSearch('kazi ploae playlist', limit = 2)
+            # Getting a random id from the specific playlist
+            yt_id = random.choice(playlist_dict)['id']
 
-#playlist = videosSearch.result()['result'][1]['link']
+            # Generating the URL.
+            yt_url = f'https://www.youtube.com/watch?v={yt_id}'
 
-#import youtube_dl
+            # Downloading the song and saving it to the specified location     
 
-#with youtube_dl.YoutubeDL(ytdl_options) as ydl:
-#    playlist_dict = ydl.extract_info(playlist, download = False)
+            self.download_song(url = yt_url, save_location = '.')
 
-#    for video in playlist_dict["entries"]:
-#        print(video.get("title"))
-
-
-    #https://stackoverflow.com/questions/44183473/get-video-information-from-a-list-of-playlist-with-youtube-dl
-        
 
     # Returns the name of the song, the artist (if it can be determined) and the path to the song inside the machine.
     def get_song_info(self, url: str, save_location: str) -> List[str]:

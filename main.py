@@ -6,8 +6,8 @@ from MusicManager.MusicManager import MusicManager
 
 
 musicManager = MusicManager(ytdl_options = ytdl_options)
-musicManager.download_song(url="https://www.youtube.com/watch?v=q2a1m-tQrGU", save_location='.')
-
+#musicManager.download_song(url="https://www.youtube.com/watch?v=q2a1m-tQrGU", save_location='.')
+musicManager.add_song('kazi ploae')
 
 #from youtubesearchpython import PlaylistsSearch
 
@@ -18,7 +18,6 @@ musicManager.download_song(url="https://www.youtube.com/watch?v=q2a1m-tQrGU", sa
 #import youtube_dl
 
 #with youtube_dl.YoutubeDL(ytdl_options) as ydl:
-#    playlist_dict = ydl.extract_info(playlist, download = False)
+    #playlist_dict = ydl.extract_info(playlist, download = False)
 
-#    for video in playlist_dict["entries"]:
-#        print(video.get("title"))
+    #print(playlist_dict['entries'][0]['id'])

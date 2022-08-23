@@ -16,20 +16,22 @@ class MusicManager:
 
 
     # Only refreshes the hits.'https://www.youtube.com/watch?v=lp-EO5I60KA'
-
     def refresh_hits(self) -> None:
         pass
 
 
     # Adds a new song to the database.
     # Source: https://stackoverflow.com/questions/44183473/get-video-information-from-a-list-of-playlist-with-youtube-dl
-    def add_song(self, genre: str, search_limit: int = 5, save_location: str = os.environ["SONGS"]) -> None:
+    def add_song(self, genre: str, search_limit: int = 5, save_location: str = os.environ["SONGS"]) -> Song:
 
-        search_query = f'{genre} playlist' 
+        search_query = f'{genre} music' 
         playlists_search = PlaylistsSearch(search_query, limit = search_limit)
 
         # Fetches all the resulted playlists.
         playlists = playlists_search.result()['result']
+
+        if len(playlists) == 0:
+            raise Exception("Failure: No playlists was found!")
 
         # Gets the link of a random playlist from the lists of playlists.
         playlist = random.choice(playlists)['link']
@@ -45,7 +47,11 @@ class MusicManager:
             yt_url = f'https://www.youtube.com/watch?v={yt_id}'
 
             # Downloads the song and saves it to the specified location.
-            self.download_song(url = yt_url, save_location = '.')
+            song = self.download_song(url = yt_url, save_location = save_location)
+
+            return song
+
+        return None
 
 
 
@@ -63,17 +69,18 @@ class MusicManager:
 
             try: 
                 yt_full_title = video_info.get("title", None)
-                song.path = save_location + '/' + yt_full_title
-                yt_full_title = yt_full_title.split('-')
+                yt_full_title_splitted = yt_full_title.split('-')
 
-                song.artist, song.title = yt_full_title
+                song.artist = yt_full_title_splitted[0]
+                song.title = yt_full_title_splitted[1:]
 
-                song.artist = song.artist.strip()
-                song.title = song.title.strip()
+                song.artist = ' '.join(song.artist).strip()
+                song.title = ' '.join(song.title).strip()
             except ValueError:
                 print('Warning: The name of the artist couldn\'t be determined. Default to: Unknown')
                 song.title = yt_full_title
 
+        song.path = f'{save_location}/{song.title}, {song.artist}'
         return song
 
 

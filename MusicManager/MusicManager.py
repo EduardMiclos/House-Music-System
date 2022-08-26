@@ -3,7 +3,7 @@ from youtubesearchpython import PlaylistsSearch
 import os
 from typing import List
 import random
-from MusicManager.Song import Song
+from Song import Song
 
 class MusicManager:
     def __init__(self, ytdl_options: dict) -> None:

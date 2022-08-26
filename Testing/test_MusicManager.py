@@ -1,7 +1,10 @@
 import pytest
 import youtube_dl as ytdl
-import os
-from MusicManager.Song import Song
+import sys, os
+
+sys.path.append(os.path.join('..', 'MusicManager'))
+
+from Song import Song
 
 """
 Trying to download a song using a wrong url

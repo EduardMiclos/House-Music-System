@@ -7,6 +7,9 @@ class DatabaseManager:
         self.db_name = db_name
         sql.enable_callback_tracebacks(True)
 
+        if '.db' not in self.db_name:
+            self.db_name += '.db'
+
     # Access modes:
         # ro -> read-only
         # rw -> read-write
@@ -21,12 +24,13 @@ class DatabaseManager:
         print('Failure: The specified path does not exist!')
         return False
     
-    def __disconnect(self) -> bool:
+    def __disconnect(self) -> None:
         self.con.close()
         self.cursor = None
 
     def __exec_query(self, query: str) -> sql.Cursor:
-        return self.cursor.execute(query)
+        self.cursor.execute(query)
+        return self.cursor
 
     def read(self, query: str) -> List[str]:
 
@@ -50,8 +54,9 @@ class DatabaseManager:
             raise Exception('Failure: Could not connect to the database!')
 
         cursor = self.__exec_query(query)
+        self.con.commit()
 
-        self.disconnect()
+        self.__disconnect()
         return cursor
 
     def list_tables(self) -> List[str]:

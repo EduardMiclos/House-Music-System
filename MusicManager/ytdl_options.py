@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-ytdl_options = {
+video = {
     'format': 'bestaudio/best',
     
      # The dot at the end is mandatory! (Avoiding some kind of conversion error).
@@ -13,4 +13,8 @@ ytdl_options = {
         'preferredcodec': 'mp3',
         'preferredquality': '192'
     }]
+}
+
+playlist = {
+    'extract_flat': 'in_playlist'
 }

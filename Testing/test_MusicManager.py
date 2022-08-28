@@ -11,7 +11,7 @@ Trying to download a song using a wrong url
 raises a ytdl.utils.DownloadError exception.
 """
 def test_download_song_wrong_url_raise_exc(music_manager):
-    url = pytest.yt_url_unavailable
+    url = "unavailableurl"
     save_loc = pytest.saveloc_test
 
     with pytest.raises(ytdl.utils.DownloadError):
@@ -23,7 +23,7 @@ that doesn't exist raises a OSError exception.
 """
 def test_save_song_inexistent_location_raise_exc(music_manager):
     url = pytest.yt_url 
-    save_loc = pytest.wrong_saveloc
+    save_loc = "wrongloc"
 
     with pytest.raises(OSError):
         music_manager.download_song(url = url, save_location = save_loc)
@@ -52,7 +52,8 @@ def test_title_can_be_split_artist_and_song_known(music_manager):
 
     song = music_manager.get_song_info(url = url, save_location = save_loc)
 
-    assert song.title == pytest.yt_url_songname and song.artist == pytest.yt_url_artist
+    assert song.title == pytest.yt_url_songname
+    assert song.artist == pytest.yt_url_artist
 
 
 """
@@ -85,7 +86,7 @@ def test_add_song(music_manager):
 Testing the add_song method when giving a genre (here, a random string) that doesn't return
 any playlist.
 """
-#@pytest.mark.yt_download
+@pytest.mark.yt_download
 def test_add_song_no_results(music_manager):
     genre = "xclkxznmcvoisdnjfoiksdaj"
     save_loc = pytest.saveloc_test

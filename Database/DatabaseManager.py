@@ -5,6 +5,9 @@ from typing import List
 class DatabaseManager:
     def __init__(self, db_name) -> None:
         self.db_name = db_name
+        self.con = None
+        self.cursor = None
+
         sql.enable_callback_tracebacks(True)
 
         if '.db' not in self.db_name:
@@ -24,9 +27,14 @@ class DatabaseManager:
         print('Failure: The specified path does not exist!')
         return False
     
-    def __disconnect(self) -> None:
+    def __disconnect(self) -> bool:
+        if self.con is None and self.cursor is None:
+            return False
+
         self.con.close()
         self.cursor = None
+
+        return True
 
     def __exec_query(self, query: str) -> sql.Cursor:
         self.cursor.execute(query)

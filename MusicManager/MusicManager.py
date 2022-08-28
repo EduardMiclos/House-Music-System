@@ -70,32 +70,44 @@ class MusicManager:
 
             return song
 
+    def add_genre(self, genre: str) -> bool:
+        if genre is "":
+            return False
+        genre = genre.lower()
+        self.db_adapter.add_genre(genre)
+        return True
 
     # Adds a new song to the database.
     # Source: https://stackoverflow.com/questions/44183473/get-video-information-from-a-list-of-playlist-with-youtube-dl
-    def add_song(self, genre: str = None, title: str = None, url: str = None, search_limit: int = 5, save_location: str = "../Database/songs") -> Song:
+    def add_song(self, genre: str, title: str = None, url: str = None, search_limit: int = 5, save_location: str = "../Database/songs") -> Song:
 
         song = None
 
-        if genre is not None:
-            # Getting a randomly selected playlist.
-            playlist = self.__get_playlist_link(genre, search_limit)
+        if title is not None:
 
-            # Fetching a randomly selected song from the playlist.
-            song = self.__fetch_song(playlist)  
-        elif title is not None:
             # Getting the song url.
             song_url = self.__get_song_link(title)
 
             # Downloading the song.
             song = self.download_song(url = song_url, save_location = save_location)
+        
         elif url is not None:
-            # Directly downloading the song.
-            song = self.download_song(url = url, save_location = save_location)
-        else:
-            print('Failure: You need to specify either a genre, a title or the url for a specific song!')
 
+            # Directly downloading the song.
+            self.download_song(url = url, save_location = save_location)
+
+        else:
+
+            # Getting a randomly selected playlist.
+            playlist = self.__get_playlist_link(genre, search_limit)
+
+            # Fetching a randomly selected song from the playlist.
+            song = self.__fetch_song(playlist)
+        
+ 
         if song is not None:
+            song.genre = genre
+
             # Adding the song to the database.
             self.db_adapter.add_song(song)
     
@@ -120,9 +132,11 @@ class MusicManager:
                 yt_title = yt_title.split('-')
 
                 song.artist = yt_title[0]
+                song.artist = song.artist.strip()
 
                 song.title = yt_title[1:]
                 song.title = ''.join(song.title).strip()
+
             else:
                 print('Warning: The name of the artist couldn\'t be determined. Default to: Unknown')
                 song.title = yt_title
@@ -148,3 +162,10 @@ class MusicManager:
             ytdl_configured.download([url])
            
         return song
+
+
+
+dbmng = MusicManager(ytdl_options, DatabaseAdapter('../Database/SongsDatabase'))
+dbmng.add_song(genre = 'erotic', url = 'https://www.youtube.com/watch?v=fb4FJ_a1zdw')
+dbmng.add_song(genre = 'erotic', url = 'https://www.youtube.com/watch?v=4RcMHVE-8iY')
+dbmng.add_song(genre = 'erotic', url = 'https://www.youtube.com/watch?v=ekmPrWebXbo')

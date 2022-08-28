@@ -12,19 +12,17 @@ class DatabaseAdapter:
         self.db_manager = DatabaseManager(db_path)
 
     def add_genre(self, genre):
-        genre = genre.upper()
-
-        query = f'INSERT INTO Genres VALUES(\'{genre}\')'
+        query = f'INSERT INTO Genres VALUES("{genre}")'
         self.db_manager.write(query)
         # TBE
 
     def add_song(self, song):
-        query = f'INSERT INTO Songs VALUES(\'{song.title}\', \'{song.artist}\', \'{song.genre}\', \'{song.path}\')'
+        query = f'INSERT INTO Songs VALUES("{song.title}", "{song.artist}", "{song.genre}", "{song.path}")'
         self.db_manager.write(query)
         # TBE
     
     def genre_exists(self, genre) -> bool:
-        query = f'SELECT COUNT(1) FROM Genres WHERE name = \'{genre}\''
+        query = 'SELECT COUNT(1) FROM Genres WHERE name = "{genre}"'
         cursor = self.db_manager.read(query)
         records = cursor.fetchone()
 
@@ -36,7 +34,6 @@ class DatabaseAdapter:
             query = f'SELECT * FROM Songs ORDER BY RAND() LIMIT 1'
             cursor = self.db_manager.write(query)
         
-            print(cursor.fetchall())
             return None
         
         # genre doesn't exist exception TBE

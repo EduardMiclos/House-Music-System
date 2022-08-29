@@ -4,6 +4,7 @@ import youtube_dl as ytdl
 from youtubesearchpython import PlaylistsSearch, VideosSearch
 from typing import List
 import random
+import time
 
 from Song import Song
 import ytdl_options
@@ -94,7 +95,7 @@ class MusicManager:
         elif url is not None:
 
             # Directly downloading the song.
-            self.download_song(url = url, save_location = save_location)
+            song = self.download_song(url = url, save_location = save_location)
 
         else:
 
@@ -158,14 +159,28 @@ class MusicManager:
 
         # The dot at the end is mandatory in order to avoid some errors.
         self.ytdl_options.video['outtmpl'] = song.path + '.'
+
         with ytdl.YoutubeDL(self.ytdl_options.video) as ytdl_configured:
-            ytdl_configured.download([url])
+            try:
+                ytdl_configured.download([url])
+            except ytdl.utils.DownloadError:
+                print('Failure: Couldn\'t download: {song.title}! This may be due to a HTTP Error. Retrying in: 10 seconds.')
+                
+                time.sleep(10)
+                try:
+                    ytdl_configured.download([url])
+                except ytdl.utils.DownloadError:
+                    print('Failure: Unable to download: {song.title}! Skipping.')
+                    return None
            
         return song
 
+    def play_song(self, genre: str = None, title: str = None, artist: str = None):
+        if genre is not None:
+            song = self.db_adapter.fetch_song(genre)
 
+            if song is not None:
+                os.system(f'mpg123 "{song.path}.mp3"')
 
 dbmng = MusicManager(ytdl_options, DatabaseAdapter('../Database/SongsDatabase'))
-dbmng.add_song(genre = 'erotic', url = 'https://www.youtube.com/watch?v=fb4FJ_a1zdw')
-dbmng.add_song(genre = 'erotic', url = 'https://www.youtube.com/watch?v=4RcMHVE-8iY')
-dbmng.add_song(genre = 'erotic', url = 'https://www.youtube.com/watch?v=ekmPrWebXbo')
+dbmng.play_song('erotic')

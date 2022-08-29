@@ -1,7 +1,7 @@
 import sys, os
 
 sys.path.append(os.path.join('..', 'MusicManager'))
-import Song
+from Song import Song
 
 sys.path.append(os.path.join('..', 'Database'))
 from DatabaseManager import DatabaseManager
@@ -17,25 +17,37 @@ class DatabaseAdapter:
         # TBE
 
     def add_song(self, song):
-        query = f'INSERT INTO Songs VALUES("{song.title}", "{song.artist}", "{song.genre}", "{song.path}")'
+        query = f'INSERT INTO Songs VALUES("{song.title}", "{song.artist}", "{song.genre}", "{song.path}", datetime("now"))'
+        print(query)
         self.db_manager.write(query)
         # TBE
     
     def genre_exists(self, genre) -> bool:
-        query = 'SELECT COUNT(1) FROM Genres WHERE name = "{genre}"'
-        cursor = self.db_manager.read(query)
-        records = cursor.fetchone()
+        query = f'SELECT COUNT(1) FROM Genres WHERE name = "{genre}"'
+        records = self.db_manager.read(query)
+        records = records[0][0]
 
         return False if records == 0 else True
 
     # Fetches a random song from the database.
     def fetch_song(self, genre) -> Song:
         if self.genre_exists(genre):
-            query = f'SELECT * FROM Songs ORDER BY RAND() LIMIT 1'
-            cursor = self.db_manager.write(query)
+            query = f'SELECT * FROM Songs ORDER BY RANDOM() LIMIT 1'
+            db_song = self.db_manager.write(query)
+            
+            if len(db_song) == 0:
+                print('Failure: There is no song from this genre!')
+                return None
+            
+            db_song = db_song[0]
+            song = Song(db_song[0], db_song[1], db_song[2], db_song[3])
+
+            return song
         
-            return None
-        
-        # genre doesn't exist exception TBE
+        print('Failure: The specified genre does not exist!')
         return None
+
+
+dbadapter = DatabaseAdapter('../Database/SongsDatabase')
+dbadapter.fetch_song('erotic')
 

@@ -49,9 +49,10 @@ class DatabaseManager:
             raise Exception('Failure: Coudld not connect to the database!')
 
         cursor = self.__exec_query(query)
+        res_list = cursor.fetchall()
 
-        self.disconnect()
-        return cursor
+        self.__disconnect()
+        return res_list
 
     def write(self, query: str) -> List[str]:
 
@@ -62,20 +63,10 @@ class DatabaseManager:
             raise Exception('Failure: Could not connect to the database!')
 
         cursor = self.__exec_query(query)
+        res_list = cursor.fetchall()
         self.con.commit()
 
         self.__disconnect()
-        return cursor
-
-    def list_tables(self) -> List[str]:
-        cursor = self.read("SELECT name FROM sqlite_master WHERE type = 'table';")
-
-        tables = cursor.fetchall()
-
-        if len(tables) == 0:
-            raise Exception('Failure: No table was found!')
-
-        return tables
-
+        return res_list
          
 

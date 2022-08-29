@@ -66,6 +66,25 @@ def test_db_disconnect(db_manager):
     assert db_manager._DatabaseManager__disconnect() == True
 
 
+"""
+If the reading query is wrong, the program should
+raise a sqlite3.OperationalError.
+"""
+@pytest.mark.dbmanager_datamanipulation
+def test_dbread_wrong_query(db_manager):
+    wrong_query = 'wrongquery'
 
+    with pytest.raises(sql.OperationalError):
+        db_manager.read(wrong_query)
 
+"""
+If the writing query is wrong, the program should
+raise a sqlite3.OperationalError.
+"""
+@pytest.mark.dbmanager_datamanipulation
+def test_dbwrite_wrong_query(db_manager):
+    wrong_query = 'wrongquery'
+
+    with pytest.raises(sql.OperationalError):
+        db_manager.write(wrong_query)
 

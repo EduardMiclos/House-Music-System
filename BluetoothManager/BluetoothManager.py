@@ -12,6 +12,14 @@ class BluetoothManager:
             self.target_uuid = target_uuid
 
         try:
+            # Restarting pulse audio s.t. we are able to connect to the device.
+            pulseaudio_status = subprocess.run(['pulseaudio', '--check'], stdout=subprocess.DEVNULL) 
+
+            if pulseaudio_status.returncode == 0:
+                subprocess.run(['pulseaudio', '--kill'], check = True)
+
+            subprocess.run(['pulseaudio', '--start'], check = True)
+
             subprocess.run(['bluetoothctl', 'connect', self.target_uuid], check = True)
 
             device_info = self.get_device_info()
@@ -66,4 +74,4 @@ class BluetoothManager:
         return True if 'yes' in is_connected else False
 
 bm = BluetoothManager(target_uuid = '2C:FD:B4:38:5D:CA')
-
+bm.connect()

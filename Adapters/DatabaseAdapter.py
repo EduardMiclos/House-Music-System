@@ -18,7 +18,6 @@ class DatabaseAdapter:
 
     def add_song(self, song):
         query = f'INSERT INTO Songs VALUES("{song.title}", "{song.artist}", "{song.genre}", "{song.path}", datetime("now"))'
-        print(query)
         self.db_manager.write(query)
         # TBE
     
@@ -46,8 +45,3 @@ class DatabaseAdapter:
         
         print('Failure: The specified genre does not exist!')
         return None
-
-
-dbadapter = DatabaseAdapter('../Database/SongsDatabase')
-dbadapter.fetch_song('erotic')
-

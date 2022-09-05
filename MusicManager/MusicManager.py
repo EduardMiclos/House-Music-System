@@ -6,11 +6,10 @@ from typing import List
 import random
 import time
 
-from Song import Song
-import ytdl_options
+from MusicManager.Song import Song
+from MusicManager import ytdl_options
 
-sys.path.append(os.path.join('..', 'Adapters'))
-from DatabaseAdapter import DatabaseAdapter
+from Adapters.DatabaseAdapter import DatabaseAdapter
 
 class MusicManager:
     def __init__(self, ytdl_options: dict, db_adapter: DatabaseAdapter = DatabaseAdapter()) -> None:
@@ -108,7 +107,7 @@ class MusicManager:
  
         if song is not None:
             song.genre = genre
-
+ 
             # Adding the song to the database.
             self.db_adapter.add_song(song)
     
@@ -175,7 +174,7 @@ class MusicManager:
            
         return song
 
-    def play_song(self, genre: str = None, title: str = None, artist: str = None):
+    def play(self, genre: str = None, title: str = None, artist: str = None):
         if genre is not None:
             song = self.db_adapter.fetch_song(genre)
 
@@ -184,5 +183,3 @@ class MusicManager:
 
         # TBC
 
-dbmng = MusicManager(ytdl_options, DatabaseAdapter('../Database/SongsDatabase'))
-dbmng.play_song('erotic')

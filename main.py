@@ -1,23 +1,43 @@
-#from MusicManager.MusicManager import MusicManager
-
-#from typing import List
-from MusicManager.ytdl_options import ytdl_options
+from Adapters.VoiceCommandAdapter import VoiceCommandAdapter
 from MusicManager.MusicManager import MusicManager
 
 
-musicManager = MusicManager(ytdl_options = ytdl_options)
-#musicManager.download_song(url="https://www.youtube.com/watch?v=q2a1m-tQrGU", save_location='.')
-musicManager.add_song('kazi ploae')
+class MusicSystem:
+    def __init__(self) -> None:
+        # List of the UUIDs of all the available Bluetooth Devices.
+        self.bluetooth_devices =  {
+            "JBL_GO3_1": '2C:FD:B4:38:5D:CA',
+            "JBL_GO3_2": '', # Need to buy it first.
+            "MICROPHONE_UUID": '' # Need to but it first.
+        }
 
-#from youtubesearchpython import PlaylistsSearch
+        # List of all the voice commands along with the corresponding function pointers.
+        self.voice_cmds = {
+            "PLAY_GENRE": ['play genre', self.play_genre],
+            "PLAY_SONG": ['play song', self.play_song],
+            "FULL_REFRESH": ['make a full refresh', self.full_refresh],
+            "HITS_REFRESH": ['refresh the hits', self.refresh_hits],
+            "DOWNLOAD": ['download new songs', self.download]
+        }
 
-#videosSearch = PlaylistsSearch('kazi ploae playlist', limit = 2)
+        self.db_adapter = DatabaseAdapter('Database/SongsDatabase.db')
+        self.music_manager = MusicManager()
+        self.voice_adapter = VoiceCommandAdapter(voice_cmds = self.voice_cmds.items())
 
-#playlist = videosSearch.result()['result'][1]['link']
+    def play_genre(self) -> None:
+        pass
 
-#import youtube_dl
+    def play_song(self) -> None:
+        pass
 
-#with youtube_dl.YoutubeDL(ytdl_options) as ydl:
-    #playlist_dict = ydl.extract_info(playlist, download = False)
+    def full_refresh(self) -> None:
+        pass
 
-    #print(playlist_dict['entries'][0]['id'])
+    def refresh_hits(self) -> None:
+        pass
+
+    def download(self) -> None:
+        pass
+
+
+

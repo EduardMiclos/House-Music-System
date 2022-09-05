@@ -1,10 +1,7 @@
 import sys, os
 
-sys.path.append(os.path.join('..', 'MusicManager'))
-from Song import Song
-
-sys.path.append(os.path.join('..', 'Database'))
-from DatabaseManager import DatabaseManager
+from MusicManager.Song import Song
+from Database.DatabaseManager import DatabaseManager
 
 # This class adapts the DatabaseManager class to the MusicManager.
 class DatabaseAdapter:

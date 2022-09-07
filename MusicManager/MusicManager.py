@@ -12,7 +12,7 @@ from MusicManager import ytdl_options
 from Adapters.DatabaseAdapter import DatabaseAdapter
 
 class MusicManager:
-    def __init__(self, ytdl_options: dict, db_adapter: DatabaseAdapter = DatabaseAdapter()) -> None:
+    def __init__(self, ytdl_options: dict = ytdl_options, db_adapter: DatabaseAdapter = DatabaseAdapter('../Database/SongsDatabase.db')) -> None:
         self.ytdl_options = ytdl_options
         self.db_adapter = db_adapter
 

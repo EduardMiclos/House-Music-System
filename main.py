@@ -17,27 +17,39 @@ class MusicSystem:
             "PLAY_SONG": ['play song', self.play_song],
             "FULL_REFRESH": ['make a full refresh', self.full_refresh],
             "HITS_REFRESH": ['refresh the hits', self.refresh_hits],
-            "DOWNLOAD": ['download new songs', self.download]
+            "DOWNLOAD": ['download new songs', self.download],
+            "PAUSE": ['pause', self.pause],
+            "STOP": ['stop', self.stop],
+            "TURN_OFF": ['turn off', self.turn_off]
         }
 
-        self.db_adapter = DatabaseAdapter('Database/SongsDatabase.db')
         self.music_manager = MusicManager()
         self.voice_adapter = VoiceCommandAdapter(voice_cmds = self.voice_cmds.items())
 
     def play_genre(self) -> None:
-        pass
+        self.voice_adapter.speak('Please pick a genre')
 
     def play_song(self) -> None:
-        pass
+        self.voice_adapter.speak('Please pick a song')
 
     def full_refresh(self) -> None:
-        pass
+        self.voice_adapter.speak('Refreshing all songs')
 
     def refresh_hits(self) -> None:
-        pass
+        self.voice_adapter.speak('Refreshing all the hits')
 
     def download(self) -> None:
-        pass
+        self.voice_adapter.speak('Downloading new songs')
+
+    def pause(self) -> None:
+        self.voice_adapter.speak('Pausing')
+
+    def stop(self) -> None:
+        self.voice_adapter.speak('Stopping')
+
+    def turn_off(self) -> None:
+        self.voice_adapter.speak('Turning off. Goodbye!')
 
 
-
+ms = MusicSystem()
+ms.voice_adapter.interpret("downgrade new ong")()

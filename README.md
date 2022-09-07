@@ -10,6 +10,7 @@ This program uses Voice Recognition, SqlLite3, Bluetoothctl, OOP Python and Pyte
 I have also made use of the following Design Patterns:
 
 - Adapters.
+- Bridges.
 
 ## Project diagram
 <p align="center">

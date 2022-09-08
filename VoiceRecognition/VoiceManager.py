@@ -3,10 +3,10 @@ import pyttsx3
 
 recognizer = speech_recognition.Recognizer()
 
-while True:
-    try:
-        with speech_recognition.Microphone() as mic:
-            pass
+#while True:
+#    try:
+#        with speech_recognition.Microphone() as mic:
+#            pass
             #recognizer.adjust_for_ambient_noise(mic, duration = 0.2)
             #audio = recognizer.listen(mic)
 
@@ -16,8 +16,7 @@ while True:
 
             #print(f'Recognized: {text}')
         
-    except speech_recognition.UnknownValueError:
-        recognizer = speech_recognition.Recognizer()
-        continue
+#    except speech_recognition.UnknownValueError:
+#        recognizer = speech_recognition.Recognizer()
+#        continue
        
-        

@@ -25,7 +25,7 @@ class DatabaseAdapter:
 
         return False if records == 0 else True
 
-    # Fetches a random song from the database.
+    # Fetches a random song from the database, based on the specified genre.
     def fetch_song(self, genre) -> Song:
         if self.genre_exists(genre):
             query = f'SELECT * FROM Songs ORDER BY RANDOM() LIMIT 1'

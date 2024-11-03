@@ -14,5 +14,5 @@ I have also made use of the following Design Patterns:
 
 ## Project diagram
 <p align="center">
-  <img src="https://i.imgur.com/U0Rwf9G.png"/>
+  <img src="https://i.imgur.com/sFyvLU0.png"/>
 </p>

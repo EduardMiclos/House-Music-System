@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, Float, String, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 DATABASE_URL = 'sqlite:///songs.db'
@@ -23,13 +23,15 @@ class Song(Base):
     yd_song_id = Column(String)
     genre_id = Column(Integer, ForeignKey('genre.id'))
     title = Column(String, nullable = False)    
+    last_listened_before_cycle = Column(DateTime)
     last_listened = Column(DateTime)
-    last_listened_percent = Column(Integer)
+    average_listen_time_before_cycle = Column(Float)
+    average_listen_time = Column(Float)
     duration_seconds = Column(Integer)
-    play_count = Column(Integer)
+    current_cycle_play_count = Column(Integer)
     
     # Linking the song both to a genre and to one or more artists
-    genre = relationship("Genre", back_populates = "song")
+    genre = relationship("Genre", back_populates = "songs")
     artists = relationship("artist", back_populates = "song")
     
 class Artist(Base):

@@ -21,10 +21,12 @@ cursor.execute('''
         yt_song_id TEXT,
         genre_id INTEGER,
         title TEXT NOT NULL,
+        last_listened_before_cycle DATETIME,
         last_listened DATETIME,
-        last_listened_percent INTEGER,
+        average_listen_time_before_cycle FLOAT,
+        average_listen_time FLOAT,
         duration_seconds INTEGER,
-        play_count INTEGER,
+        current_cycle_play_count INTEGER,
         FOREIGN KEY (genre_id) REFERENCES genre(id)
     );
 ''')

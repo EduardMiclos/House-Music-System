@@ -31,6 +31,7 @@ cursor.execute('''
         average_play_time_minutes FLOAT,
         play_count_before_cycle INTEGER,
         play_count INTEGER,
+        path TEXT NOT NULL,
         FOREIGN KEY (genre_id) REFERENCES genre(id) ON DELETE SET NULL
     );
 ''')

@@ -39,6 +39,7 @@ class Song(Base):
     average_play_time_minutes = Column(Float)
     play_count_before_cycle = Column(Integer)
     play_count = Column(Integer)
+    path = Column(String)
     
     # Linking the song both to a genre and to one or more artists
     genre = relationship("Genre", back_populates = "songs")

@@ -3,6 +3,7 @@ import sqlite3
 conn = sqlite3.connect('songs.db')
 cursor = conn.cursor()
 
+cursor.execute("DROP TABLE IF EXISTS song_artist;")
 cursor.execute("DROP TABLE IF EXISTS artist;")
 cursor.execute("DROP TABLE IF EXISTS song;")
 cursor.execute("DROP TABLE IF EXISTS genre;")
@@ -21,23 +22,34 @@ cursor.execute('''
         yt_song_id TEXT,
         genre_id INTEGER,
         title TEXT NOT NULL,
-        last_listened_before_cycle DATETIME,
-        last_listened DATETIME,
-        average_listen_time_before_cycle FLOAT,
-        average_listen_time FLOAT,
-        duration_seconds INTEGER,
-        current_cycle_play_count INTEGER,
-        FOREIGN KEY (genre_id) REFERENCES genre(id)
+        duration_minutes INTEGER,
+        last_played_before_cycle DATETIME,
+        last_played DATETIME,
+        play_time_minutes_before_cycle FLOAT,
+        play_time_minutes FLOAT,
+        average_play_time_minutes_before_cycle FLOAT,
+        average_play_time_minutes FLOAT,
+        play_count_before_cycle INTEGER,
+        play_count INTEGER,
+        FOREIGN KEY (genre_id) REFERENCES genre(id) ON DELETE SET NULL
     );
 ''')
 
 cursor.execute('''
     CREATE TABLE artist (
         id INTEGER PRIMARY KEY,
-        song_id INTEGER,
-        name TEXT NOT NULL,
-        FOREIGN KEY (song_id) REFERENCES song(id)
+        name TEXT NOT NULL
     );
+''')
+
+cursor.execute('''
+    CREATE TABLE song_artist (
+        song_id INTEGER,
+        artist_id INTEGER,
+        PRIMARY KEY (song_id, artist_id),
+        FOREIGN KEY (song_id) REFERENCES song(id) ON DELETE CASCADE,
+        FOREIGN KEY (artist_id) REFERENCES artist(id) ON DELETE CASCADE
+    )
 ''')
 
 conn.commit()

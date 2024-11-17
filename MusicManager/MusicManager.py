@@ -1,185 +1,143 @@
-
-import sys, os
-import youtube_dl as ytdl
-from youtubesearchpython import PlaylistsSearch, VideosSearch
-from typing import List
 import random
-import time
+import subprocess
+import os
+import threading
+import time 
 
-from MusicManager.Song import Song
-from MusicManager import ytdl_options
+from ytmusicapi import YTMusic
 
-from Adapters.DatabaseAdapter import DatabaseAdapter
+from Database.models import Song
+from Database.SongRepository import SongRepository
 
 class MusicManager:
-    def __init__(self, ytdl_options: dict = ytdl_options, db_adapter: DatabaseAdapter = DatabaseAdapter('../Database/SongsDatabase.db')) -> None:
-        self.ytdl_options = ytdl_options
-        self.db_adapter = db_adapter
-
-    # Refreshes the list of songs.
-    def full_refresh(self) -> None:
-        pass
-
-
-    # Only refreshes the hits.
-    def refresh_hits(self) -> None:
-        pass
-
-
-    def __get_playlist_link(self, search_query, search_limit):
-        playlists_search = PlaylistsSearch(search_query, limit = search_limit)
-
-        # Fetches the resulted playlists.
-        playlists = playlists_search.result()['result']
-
-        if len(playlists) == 0:
-            raise Exception("Failure: No playlists was found!")
-
-        # Gets the link of a random playlist from the lists of playlists.
-        playlist = random.choice(playlists)['link']
-
-        return playlist
-
-    def __get_song_link(self, search_query):
-        videos_search = VideosSearch(search_query, limit = 1)
-
-        # Fetches the resulted videos.
-        videos = videos_search.result()['result']
-
-        if len(videos) == 0:
-            raise Exception("Failure: No song was found!")
-
-        video = videos[0]['link']
-
-        return video
-
-
-    def __fetch_song(self, playlist) -> Song:
-        with ytdl.YoutubeDL(self.ytdl_options.playlist) as ytdl_configured:
-            playlist_dict = ytdl_configured.extract_info(playlist, download = False)
-            playlist_dict = playlist_dict['entries']
-
-            # Gets a random id from the specific playlist.
-            yt_id = random.choice(playlist_dict)['id']
-
-            # Generates the YT URL.
-            yt_url = f'https://www.youtube.com/watch?v={yt_id}'
-
-            # Downloads the song and saves it to the specified location.
-            song = self.download_song(url = yt_url, save_location = save_location)
-
-            return song
-
-    def add_genre(self, genre: str) -> bool:
-        if genre is "":
-            return False
-        genre = genre.lower()
-        self.db_adapter.add_genre(genre)
-        return True
-
-    # Adds a new song to the database.
-    # Source: https://stackoverflow.com/questions/44183473/get-video-information-from-a-list-of-playlist-with-youtube-dl
-    def add_song(self, genre: str, title: str = None, url: str = None, search_limit: int = 5, save_location: str = "../Database/songs") -> Song:
-
-        song = None
-
-        if title is not None:
-
-            # Getting the song url.
-            song_url = self.__get_song_link(title)
-
-            # Downloading the song.
-            song = self.download_song(url = song_url, save_location = save_location)
+    def __init__(self):
+        self.yt = YTMusic()
+        self.song_repo = SongRepository()
+        self.is_playing = False
         
-        elif url is not None:
-
-            # Directly downloading the song.
-            song = self.download_song(url = url, save_location = save_location)
-
-        else:
-
-            # Getting a randomly selected playlist.
-            playlist = self.__get_playlist_link(genre, search_limit)
-
-            # Fetching a randomly selected song from the playlist.
-            song = self.__fetch_song(playlist)
+        self.audio_thread= None
+        self.audio_thread_interrupt_signal = None
         
- 
-        if song is not None:
-            song.genre = genre
- 
-            # Adding the song to the database.
-            self.db_adapter.add_song(song)
-    
-        return song
-
-
-
-    # Returns a song object.
-    def get_song_info(self, url: str, save_location: str) -> Song:
-
-        # Creates a new, empty song object.
-        song = Song()
-
-        # Gets the title (song name and artist).
-        with ytdl.YoutubeDL(self.ytdl_options.video) as ytdl_configured:
-
-            # Extracts video information.
-            video_info = ytdl_configured.extract_info(url, download = False)
-
-            yt_title = video_info.get("title", None)
-            if '-' in yt_title:
-                yt_title = yt_title.split('-')
-
-                song.artist = yt_title[0]
-                song.artist = song.artist.strip()
-
-                song.title = yt_title[1:]
-                song.title = ''.join(song.title).strip()
-
-            else:
-                print('Warning: The name of the artist couldn\'t be determined. Default to: Unknown')
-                song.title = yt_title
- 
-        song.lower()
-        song.path = f'{save_location}/{song.title}, {song.artist}'
-        return song
-
-
-
     # Downloads a song with the specified url and saves the .mp3 to save_location.
-    def download_song(self, url: str, save_location: str) -> List[str]: 
-   
-        # Checks to see if the directory exists.
-        if not os.path.isdir(save_location):
-            raise OSError('Error: The specified location does not exist!')
-
-        song = self.get_song_info(url = url, save_location = save_location)
-
-        # The dot at the end is mandatory in order to avoid some errors.
-        self.ytdl_options.video['outtmpl'] = song.path + '.'
-
-        with ytdl.YoutubeDL(self.ytdl_options.video) as ytdl_configured:
-            try:
-                ytdl_configured.download([url])
-            except ytdl.utils.DownloadError:
-                print('Failure: Couldn\'t download: {song.title}! This may be due to a HTTP Error. Retrying in: 10 seconds.')
+    def download_song(self, url: str, save_location: str, song_id: str) -> str: 
+        output_template = f'{save_location}/{song_id}.%(ext)s'
+        
+        command = [
+            'yt-dlp',
+            '--extract-audio',
+            '--audio-format', 'mp3',
+            url,
+            '-o', output_template
+        ]
+        
+        try:
+            subprocess.run(command,
+                           check = True, 
+                           text = True, 
+                           stdout = subprocess.PIPE,
+                           stderr = subprocess.PIPE
+                          )
+            
+            output_file = f'{save_location}/{song_id}.mp3'
+            
+            if os.path.exists(output_file):
+                return output_file
+            return None
+        except subprocess.CalledProcessError as e:
+            print(f'Error: {e.stderr}')
+            return None
+    
+    def yt_fetch_song(self, genre: str) -> str:
+        all_yt_ids = self.song_repo.get_all_yt_ids()
+        
+        genre = self.song_repo.get_genre_by_name(genre)
+        
+        if genre is None:
+            return None
+        
+        yt_search = self.yt.search(f"popular {genre.name} playlist")
+        all_playlists = [result for result in yt_search if result['resultType'] == 'playlist']
+        
+        selected_song_id = None 
+        while selected_song_id is None:
+            random_playlist = random.choice(all_playlists)
+            
+            if 'playlistId' in random_playlist:
+                playlist_id = random_playlist['playlistId']
+                playlist = self.yt.get_playlist(playlist_id)
+        
+                tracks = playlist['tracks']
                 
-                time.sleep(10)
-                try:
-                    ytdl_configured.download([url])
-                except ytdl.utils.DownloadError:
-                    print('Failure: Unable to download: {song.title}! Skipping.')
-                    return None
-           
-        return song
+                while selected_song_id is None:
+                    random_track = random.choice(tracks)
+                    
+                    if 'videoId' in random_track:
+                        yt_id = random_track['videoId']
+                        
+                        if yt_id not in all_yt_ids:
+                            selected_song_id = yt_id
+        
+        song = self.yt.get_song(selected_song_id)
+        song_path = f'Database/songs/{genre.id}'    
+        
+        download_path = self.download_song(
+            url = song['microformat']['microformatDataRenderer']['urlCanonical'], 
+            save_location = song_path,
+            song_id = selected_song_id)
+        
+        if download_path is not None:
+            add_ok = self.song_repo.add_song(
+                yt_playlist_id = playlist_id,
+                yt_song_id = selected_song_id,
+                genre_id = genre.id,
+                title = song['videoDetails']['title'],
+                duration_minutes = int(song['videoDetails']['lengthSeconds']) / 60,
+                author_name = song['videoDetails']['author'],
+                path = song_path
+            )
+            
+            if not add_ok:
+                os.remove(download_path)
+            
+        else:
+            print('Error: Download failed.')
+    
+    def restart_play_cycle(self) -> None:
+        pass
+    
+    def refresh_song_list(self) -> None:
+        pass
+    
+    def play_mpg123(interrupt_signal, song_path):
+        process = subprocess.Popen(['mpg123', song_path])
+        
+        while not interrupt_signal:
+            time.sleep(0.1)
+            
+        process.terminate()
+    
+    def play(self, song: Song) -> None:
+        if self.is_playing:
+            return False
+    
+        self.thread_interrupt_signal = threading.Event()
+        self.audio_thread = threading.Thread(target = self.play_mpg123, args={song.path})
+        self.audio_thread.start()
+    
+    def stop(self) -> None:
+        if not self.is_playing:
+            return True
+    
+        self.thread_interrupt_signal.set()
+        self.audio_thread.join()
+        
+        self.audio_thread = None
+        self.audio_thread_interrupt_signal = None
 
-    def play(self, genre: str = None, title: str = None, artist: str = None):
-        if genre is not None:
-            song = self.db_adapter.fetch_song(genre)
+    def next(self, next_song: Song) -> None:
+        self.stop()
+        self.play(next_song)
+        
 
-            if song is not None:
-                os.system(f'mpg123 "{song.path}.mp3"')
-
-        # TBC
-
+        
+    

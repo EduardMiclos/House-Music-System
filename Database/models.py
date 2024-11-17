@@ -1,17 +1,7 @@
-from sqlalchemy import create_engine, Column, Integer, Float, String, DateTime, ForeignKey, Table
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, Table
+from sqlalchemy.orm import declarative_base, relationship
 
-DATABASE_URL = 'sqlite:///songs.db'
-
-engine = create_engine(DATABASE_URL, echo=True)
 Base = declarative_base()
-
-song_artist_association = Table(
-    'song_artist',
-    Base.metadata,
-    Column('song_id', Integer, ForeignKey('song.id', ondelete='CASCADE'), primary_key=True),
-    Column('artist_id', Integer, ForeignKey('artist.id', ondelete='CASCADE'), primary_key=True)
-)
 
 class Genre(Base):
     __tablename__ = 'genre'
@@ -29,6 +19,7 @@ class Song(Base):
     yt_playlist_id = Column(String, nullable = False)
     yt_song_id = Column(String)
     genre_id = Column(Integer, ForeignKey('genre.id'))
+    artist_id = Column(Integer, ForeignKey('artist.id'))
     title = Column(String, nullable = False)
     duration_minutes = Column(Integer)
     last_played_before_cycle = Column(DateTime)
@@ -43,7 +34,7 @@ class Song(Base):
     
     # Linking the song both to a genre and to one or more artists
     genre = relationship("Genre", back_populates = "songs")
-    artists = relationship("artist", secondary = song_artist_association, back_populates = "song")
+    artist = relationship("Artist", back_populates = "songs")
     
 class Artist(Base):
     __tablename__ = 'artist'
@@ -51,12 +42,5 @@ class Artist(Base):
     id = Column(Integer, primary_key = True)
     name = Column(String, nullable = False)
     
-    # Linking the artist to a song
-    song = relationship("Song", secondary = song_artist_association, back_populates = "artists")
-
-# Now, creating all the tables in the database
-Base.metadata.create_all(engine)
-
-# Creating a session maker to manage database sessions
-Session = sessionmaker(bind = engine)
-session = Session()
+    # This relationships links the artist to song
+    songs = relationship("Song", back_populates = "artist")

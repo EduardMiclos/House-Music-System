@@ -6,17 +6,30 @@ import time
 
 from ytmusicapi import YTMusic
 
-from Database.models import Song
+from Database.models import Song, Genre
 from Database.SongRepository import SongRepository
+
+# tbd add chronjob for refreshing song cycle
 
 class MusicManager:
     def __init__(self):
         self.yt = YTMusic()
         self.song_repo = SongRepository()
-        self.is_playing = False
         
-        self.audio_thread= None
-        self.audio_thread_interrupt_signal = None
+        # A single song can be played at once.
+        self.current_genre = None
+        self.current_song = None
+        self.current_song_play_time_in_minutes = None
+        self.is_playing = False
+        self.should_play = False
+    
+        self.music_thread = None
+        self.music_thread_interrupt_signal = None
+        
+        self.audio_thread = None
+        self.audio_thread_interrupt_signal = None 
+
+        self.initialize()
         
     # Downloads a song with the specified url and saves the .mp3 to save_location.
     def download_song(self, url: str, save_location: str, song_id: str) -> str: 
@@ -47,9 +60,8 @@ class MusicManager:
             print(f'Error: {e.stderr}')
             return None
     
-    def yt_fetch_song(self, genre: str) -> str:
+    def yt_fetch_song(self, genre: str) -> None:
         all_yt_ids = self.song_repo.get_all_yt_ids()
-        
         genre = self.song_repo.get_genre_by_name(genre)
         
         if genre is None:
@@ -93,7 +105,7 @@ class MusicManager:
                 title = song['videoDetails']['title'],
                 duration_minutes = int(song['videoDetails']['lengthSeconds']) / 60,
                 author_name = song['videoDetails']['author'],
-                path = song_path
+                path = f'{song_path}/{selected_song_id}.mp3'
             )
             
             if not add_ok:
@@ -103,41 +115,103 @@ class MusicManager:
             print('Error: Download failed.')
     
     def restart_play_cycle(self) -> None:
-        pass
+        self.song_repo.restart_cycle()
     
     def refresh_song_list(self) -> None:
-        pass
-    
-    def play_mpg123(interrupt_signal, song_path):
-        process = subprocess.Popen(['mpg123', song_path])
+        self.song_repo.cleanup_songs()
         
-        while not interrupt_signal:
-            time.sleep(0.1)
+        all_genres = self.song_repo.get_all_genres()
+        for genre in all_genres:
+            self.yt_fetch_song(genre.name)
+
+    def shuffle_song(self) -> Song:
+        if self.current_genre is not None:
+            return self.song_repo.get_random_song_by_genre(self.current_genre)
+
+    def audio_thread_exec(self, song_path):
+        self.is_playing = True
+        play_start_time = time.time()
+        
+        process = subprocess.Popen(
+            ['mpg123', song_path],
+            stdin = subprocess.PIPE,
             
-        process.terminate()
-    
-    def play(self, song: Song) -> None:
-        if self.is_playing:
-            return False
-    
-        self.thread_interrupt_signal = threading.Event()
-        self.audio_thread = threading.Thread(target = self.play_mpg123, args={song.path})
-        self.audio_thread.start()
-    
-    def stop(self) -> None:
+            # detaching mpg123 from the terminal
+            stdout = subprocess.DEVNULL,
+            stderr = subprocess.DEVNULL)
+         
+        while not self.audio_thread_interrupt_signal.is_set() and process.poll() is None:
+            time.sleep(0.1)
+        
+        if self.audio_thread_interrupt_signal.is_set():
+            process.terminate()
+            process.wait()
+
+        play_end_time = time.time()
+        
+        self.current_song_play_time_in_minutes = (play_end_time - play_start_time) / 60
+
+        self.is_playing = False
+        self.current_song = None
+
+    def music_thread_exec(self): 
+
+        def should_play_next_song():
+            return self.should_play is True and self.is_playing is False
+        
+        def should_shuffle_next_song():
+            return self.current_song is None
+
+        def clear_audio_thread():
+            self.audio_thread_interrupt_signal.set()
+            self.audio_thread.join()
+
+            self.audio_thread_interrupt_signal.clear()
+            self.audio_thread = None
+
+        while True:
+            if should_play_next_song():
+                if self.audio_thread is not None:
+                    clear_audio_thread()
+
+                if should_shuffle_next_song():
+                    self.current_song = self.shuffle_song()
+
+                self.audio_thread = threading.Thread(target = self.audio_thread_exec, args = {self.current_song.path})
+                self.audio_thread.start()
+
+            if self.music_thread_interrupt_signal.is_set():
+                if self.audio_thread is not None:
+                    clear_audio_thread()
+
+                self.music_thread_interrupt_signal.clear()
+
+            time.sleep(1)
+
+    def initialize(self) -> None:
+        self.audio_thread_interrupt_signal = threading.Event()
+        self.music_thread_interrupt_signal = threading.Event()
+
+        self.music_thread = threading.Thread(target = self.music_thread_exec)
+        self.music_thread.start()
+
+    # tbd: change genre from str to actual Genre class and make the verification in upper class
+    def play(self, song: Song = None, genre: str = None) -> None:
         if not self.is_playing:
-            return True
-    
-        self.thread_interrupt_signal.set()
-        self.audio_thread.join()
-        
-        self.audio_thread = None
-        self.audio_thread_interrupt_signal = None
+            if song is not None:
+                self.current_song = song
+            if genre is not None:
+                self.current_genre = self.song_repo.get_genre_by_name(genre)
 
-    def next(self, next_song: Song) -> None:
+            self.should_play = True
+
+    def stop(self) -> None:
+        if self.is_playing:
+            self.should_play = False
+            self.music_thread_interrupt_signal.set()
+
+    def next(self, song: Song = None) -> None:
         self.stop()
-        self.play(next_song)
-        
-
+        self.play(song)
         
     

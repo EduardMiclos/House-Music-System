@@ -1,8 +1,11 @@
-from sqlalchemy import or_, and_
-from sqlalchemy.orm import session
+import random
+from typing import List
+
+from sqlalchemy import create_engine, or_, and_
+from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 
-from Database.models import Genre, Song
+from Database.models import Genre, Song, Artist
 
 
 """
@@ -46,31 +49,37 @@ Minimum accepted play count for the current cycle in order to consider a song fo
 MINIMUM_CURRENT_CYCLE_PLAY_COUNT = 5
 
 class SongRepository:
-    def __init__(self, session: session):
-        self.session = session
+    def __init__(self, engine: str = 'sqlite:///Database/songs.db'):
+        self.engine = create_engine(engine)
+        Session = sessionmaker(bind = self.engine)
+        self.session = Session()
     
-    def add_song(self, yt_playlist_id: str, yt_song_id: str, genre_id: int, title: str, duration_minutes: int, artists: object) -> None:
+    def add_song(self, yt_playlist_id: str, yt_song_id: str, genre_id: int, title: str, duration_minutes: int, author_name: str, path: str) -> bool:
+        artist = self.session.query(Artist).filter(Artist.name == author_name).first()
         
-        def has_same_artists(song_artists, target_artists):
-            return len(set(song_artists).difference(set(target_artists))) == 0
+        if artist is None:
+            artist = Artist(name = author_name)
+            self.session.add(artist)
+            self.session.commit()
     
         existing_song = self.session.query(Song).filter(
             or_(
                 Song.yt_song_id == yt_song_id,
                 and_(
                     Song.title == title,
-                    has_same_artists(Song.artists, artists)
+                    Song.artist == artist
                 )
             )
         ).first()
         
         if existing_song:
-            return
+            return False
     
         song = Song(
             yt_playlist_id = yt_playlist_id,
             yt_song_id = yt_song_id,
             genre_id = genre_id,
+            artist_id = artist.id,
             title = title,
             duration_minutes = duration_minutes,
             last_played_before_cycle = None,
@@ -80,11 +89,14 @@ class SongRepository:
             average_play_time_minutes_before_cycle = None,
             average_play_time_minutes = None,
             play_count_before_cycle = None,
-            play_count = None
+            play_count = None,
+            path = path
         )
         
         self.session.add(song)
         self.session.commit()
+        
+        return True
     
     def restart_cycle(self) -> None:
         self.session.query(Song).update({
@@ -132,13 +144,25 @@ class SongRepository:
         if song:
             song.last_played = datetime.now()
             self.session.commit()
-            
+
     def update_song_at_change(self, song: Song, current_session_play_time_minutes: float) -> None:
         if song:
             song.play_count += 1
-            song.play_time_minutes += current_session_play_time_minutes
+            song.play_time_minutes += min(song.duration_minutes, current_session_play_time_minutes)
             song.average_play_time_minutes = song.play_time_minutes / song.play_count
             self.session.commit()
             
+    def get_all_yt_ids(self, ) -> object:
+        return self.session.query(Song).with_entities(Song.yt_song_id).all()
+    
     def get_genre_by_name(self, genre_name: str) -> Genre:
         return self.session.query(Genre).filter(Genre.name == genre_name).first()
+    
+    def get_random_song_by_genre(self, genre: Genre) -> Song:
+        songs = self.session.query(Song).filter(Song.genre_id == genre.id).all()
+    
+        if songs:
+            return random.choice(songs)
+        
+    def get_all_genres(self) -> List[Genre]:
+        return self.session.query(Genre).all()

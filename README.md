@@ -3,7 +3,7 @@
 A modern, affordable music system designed for home entertainment. 
 Built to run on a **Raspberry Pi 4**, the system connects to a **JBL GO 3 Bluetooth speaker** and provides a **web interface** accessible from any device on a local network. The system combines advanced music management capabilities with a web interface, allowing users to control playback, organize their library and discover new music.
 
----
+
 
 ## Features
 
@@ -25,7 +25,7 @@ Built to run on a **Raspberry Pi 4**, the system connects to a **JBL GO 3 Blueto
 - Automatically fetch, categorize, and store songs in a **relational database** powered by **SQLite3**.
 - Organize metadata such as song titles, artist names, and genres for efficient management.
 
----
+
 
 ## System Overview
 
@@ -42,7 +42,8 @@ Built to run on a **Raspberry Pi 4**, the system connects to a **JBL GO 3 Blueto
 - **Raspberry Pi 4**.
 - **JBL GO 3 Bluetooth Speaker**.
 
----
+
+
 
 ## Getting Started
 

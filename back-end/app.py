@@ -1,14 +1,13 @@
-import threading
-from time import sleep
-
 from flask import Flask, request, jsonify
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
+from flask_apscheduler import APScheduler
 
 from BluetoothManager.BluetoothManager import BluetoothManager
 from MusicManager.MusicManager import MusicManager
 
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='gevent')
+scheduler = APScheduler()
 
 class MusicSystem:
     def __init__(self) -> None:
@@ -19,44 +18,33 @@ class MusicSystem:
         self.music_manager = MusicManager()
         self.bluetooth_manager = BluetoothManager(self.bluetooth_device)
 
-        self.initialize_bluetooth_connection()
-    
-    def maintain_bluetooth_connection(self) -> None:
-        while True:
-            print(f'SHOULD EMIT DISCONNECTED! {self.emissions}')
-            # self.emissions += 1
-
-            socketio.emit('bluetooth', {'status': 'connecting', 'device': None})
-
-            # while not self.bluetooth_manager.is_connected():
-            #     self.bluetooth_manager.connect()
-            #     sleep(2)
-
-            sleep(10)
-
-            print(f'SHOULD EMIT CONNECTED! {self.emissions}')
-            socketio.emit('bluetooth', {'status': 'connected', 'device': self.bluetooth_manager.get_device_name()})
-            # self.emissions += 1
-
-            # while self.bluetooth_manager.is_connected():
-            #     sleep(0.5)
-
-            sleep(10)
-    
-    def initialize_bluetooth_connection(self) -> None:
-        bluetooth_connection_thread = threading.Thread(target = self.maintain_bluetooth_connection, daemon = True)
-        bluetooth_connection_thread.start()
-
 ms = MusicSystem()
 
+@scheduler.task("cron", id="job_maintain_bluetooth_connection", second="15")
+def maintain_bluetooth_connection():
+
+    with scheduler.app.app_context():
+        print('[CRON] Checking bluetooth connection...')
+
+        if not ms.bluetooth_manager.is_connected():
+            print("[CRON] Bluetooth device is not connected.")
+            ms.bluetooth_manager.connect()
+
+        bluetooth_json = {
+            'status': 'connected' if ms.bluetooth_manager.is_connected() else 'connecting',
+            'device': ms.bluetooth_manager.get_device_name() if ms.bluetooth_manager.is_connected() else None
+        }
+
+        socketio.emit('bluetooth', bluetooth_json)
+
 @socketio.on('connect')
-def on_join():
+def connect():
     bluetooth_json = {
         'status': 'connected' if ms.bluetooth_manager.is_connected() else 'connecting',
         'device': ms.bluetooth_manager.get_device_name() if ms.bluetooth_manager.is_connected() else None
     }
 
-    socketio.emit('bluetooth', bluetooth_json, to=request.sid)
+    emit('bluetooth', bluetooth_json, to=request.sid)
 
 @app.route('/songs', methods=['GET'])
 def get_songs():
@@ -93,4 +81,7 @@ def play_song():
         return jsonify({"error": "Invalid request. Please provide a song id."}), 400
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5001, debug=True)
+    scheduler.init_app(app)
+    scheduler.start()
+
+    socketio.run(app, host='0.0.0.0', port=5001, debug=False)

@@ -1,4 +1,6 @@
-const socket = io('ws://localhost:5001');
+const socket = io("http://housemusic.local:5001/", {
+    transports: ["websocket"],
+  });
 
 function set_bluetooth_status(data) {
     const statusElement = $('#bluetooth-device-status');

@@ -32,17 +32,6 @@ class BluetoothManager:
 
             subprocess.run(['pulseaudio', '--start'], check = True)
             
-            # We're scanning because otherwise it would not connect directly to the device, althought it is available.
-            bluetooth_scan = subprocess.Popen(['bluetoothctl', 'scan', 'on'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            subprocess_timer = Timer(10, lambda process: process.kill(), [bluetooth_scan])
-            
-            print('Scanning for the device...')
-            try:
-                subprocess_timer.start()
-                bluetooth_scan.communicate()
-            finally:
-                subprocess_timer.cancel()
-            
             subprocess.run(['bluetoothctl', 'connect', self.target_uuid], check = True)
             device_info = self.get_device_info()
             

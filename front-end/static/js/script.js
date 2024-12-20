@@ -14,6 +14,20 @@ function set_bluetooth_status(data) {
 
 socket.on('bluetooth', (data) => {set_bluetooth_status(data);});
 
+function play() {
+    $.ajax({
+        type: "GET",
+        url: "http://housemusic.local:5001/playsong"
+    })
+}
+
+function pause() {
+    $.ajax({
+        type: "GET",
+        url: "http://housemusic.local:5001/pausesong"
+    })
+}
+
 // document.addEventListener("DOMContentLoaded", function () {
 //     loadSongs();
 //     loadArtists();

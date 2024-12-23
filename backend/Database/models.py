@@ -1,3 +1,6 @@
+from math import modf
+
+from flask import jsonify
 from sqlalchemy import Column, Integer, Float, String, DateTime, ForeignKey, Table
 from sqlalchemy.orm import declarative_base, relationship
 
@@ -35,6 +38,15 @@ class Song(Base):
     # Linking the song both to a genre and to one or more artists
     genre = relationship("Genre", back_populates = "songs")
     artist = relationship("Artist", back_populates = "songs")
+
+    def to_json(self):
+        return jsonify({
+            "id": self.id,
+            "title": self.title,
+            "artist": self.artist,
+            "genre": self.genre,
+            "duration": (lambda song_duration_fract, song_duration_int: f'{int(song_duration_int)}:{int(round(song_duration_fract, 2) * 60)}')(*modf(self.duration_minutes))
+        })
     
 class Artist(Base):
     __tablename__ = 'artist'

@@ -7,6 +7,7 @@ class BluetoothManager:
     def __init__(self, target_uuid) -> None:
         self.target_uuid = target_uuid
         self.device_name = None
+        self.is_connected = False
 
     def get_device_name(self):
         if self.device_name is None:
@@ -15,7 +16,7 @@ class BluetoothManager:
             self.device_name = self.device_name.split(':')[1].strip()
         return self.device_name
 
-    def connect(self, target_uuid = None) -> bool:
+    def try_connect(self, target_uuid = None) -> bool:
         if self.is_connected():
             print('The device is already connected!')
             return True
@@ -74,11 +75,12 @@ class BluetoothManager:
 
         return str_process.split('\\n\\t')
 
-    def is_connected(self) -> bool:
+    def check_if_connected(self) -> bool:
         device_info = self.get_device_info()
         is_connected = ""
 
         if device_info is not None:
             is_connected = device_info[8]
-            
-        return True if 'yes' in is_connected else False
+        
+        self.is_connected = True if 'yes' in is_connected else False
+        return self.is_connected

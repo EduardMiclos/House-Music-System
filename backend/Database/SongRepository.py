@@ -167,5 +167,13 @@ class SongRepository:
         if songs:
             return random.choice(songs)
         
+    def get_recently_played_songs(self) -> List[Song]:
+        recently_played_songs = self.session.query(Song).order_by(Song.last_played.desc()).limit(3).all()
+        return recently_played_songs
+    
+    def get_songs_by_title(self, title_substr) -> List[Song]:
+        songs = self.session.query(Song).filter(Song.title.contains(title_substr)).limit(25).all()
+        return songs
+        
     def get_all_genres(self) -> List[Genre]:
         return self.session.query(Genre).all()

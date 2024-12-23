@@ -205,7 +205,7 @@ class MusicManager:
 
             self.should_play = True
 
-    def stop(self) -> None:
+    def pause(self) -> None:
         if self.is_playing:
             self.should_play = False
             self.music_thread_interrupt_signal.set()
